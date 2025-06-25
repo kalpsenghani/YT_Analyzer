@@ -17,9 +17,11 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAppStore } from "@/lib/store";
 
 export default function SignupForm() {
   const navigate = useNavigate();
+  const { register, isLoading, error, clearError } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,15 +33,23 @@ export default function SignupForm() {
     terms: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match!");
       return;
     }
-    console.log("Signup form submitted:", formData);
-    // In a real app, handle registration here
-    navigate("/dashboard");
+    
+    clearError();
+    
+    try {
+      await register(formData.email, formData.password);
+      // Registration successful, redirect to login
+      navigate("/login");
+    } catch (error) {
+      // Error is handled by the store
+      console.error("Registration failed:", error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +58,8 @@ export default function SignupForm() {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+    // Clear error when user starts typing
+    if (error) clearError();
   };
 
   const handleGoogleSignUp = () => {
@@ -81,6 +93,17 @@ export default function SignupForm() {
             </p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"
+            >
+              <p className="text-red-300 text-sm">{error}</p>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3">
@@ -97,6 +120,7 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="h-10"
                   required
+                  disabled={isLoading}
                 />
               </LabelInputContainer>
 
@@ -113,6 +137,7 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="h-10"
                   required
+                  disabled={isLoading}
                 />
               </LabelInputContainer>
             </div>
@@ -133,6 +158,7 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="pl-10 h-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </LabelInputContainer>
@@ -153,11 +179,13 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="pl-10 pr-10 h-10"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -197,11 +225,13 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="pl-10 pr-10 h-10"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                  disabled={isLoading}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -211,28 +241,33 @@ export default function SignupForm() {
                 </button>
               </div>
               {formData.confirmPassword && (
-                <div className="flex items-center gap-2 mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   {passwordsMatch ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 text-green-400" />
-                      <span className="text-xs text-green-400">
-                        Passwords match
-                      </span>
-                    </>
+                    <CheckCircle className="h-4 w-4 text-green-400" />
                   ) : passwordsDontMatch ? (
-                    <>
-                      <div className="h-3 w-3 rounded-full border border-red-400" />
-                      <span className="text-xs text-red-400">
-                        Passwords don't match
-                      </span>
-                    </>
+                    <div className="h-4 w-4 rounded-full border-2 border-red-400" />
                   ) : null}
+                  <span
+                    className={`text-xs ${
+                      passwordsMatch
+                        ? "text-green-400"
+                        : passwordsDontMatch
+                        ? "text-red-400"
+                        : "text-white/60"
+                    }`}
+                  >
+                    {passwordsMatch
+                      ? "Passwords match"
+                      : passwordsDontMatch
+                      ? "Passwords don't match"
+                      : "Confirm your password"}
+                  </span>
                 </div>
               )}
             </LabelInputContainer>
 
             {/* Terms */}
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start gap-3">
               <input
                 type="checkbox"
                 id="terms"
@@ -241,23 +276,15 @@ export default function SignupForm() {
                 onChange={handleInputChange}
                 className="mt-1 rounded border-white/20 bg-white/[0.05] text-red-500 focus:ring-red-500 focus:ring-offset-0 w-4 h-4"
                 required
+                disabled={isLoading}
               />
-              <label
-                htmlFor="terms"
-                className="text-xs text-white/70 leading-4"
-              >
+              <label htmlFor="terms" className="text-sm text-white/70 leading-relaxed">
                 I agree to the{" "}
-                <a
-                  href="#"
-                  className="text-red-400 hover:text-red-300 transition-colors"
-                >
+                <a href="#" className="text-red-400 hover:text-red-300 transition-colors">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a
-                  href="#"
-                  className="text-red-400 hover:text-red-300 transition-colors"
-                >
+                <a href="#" className="text-red-400 hover:text-red-300 transition-colors">
                   Privacy Policy
                 </a>
               </label>
@@ -266,10 +293,19 @@ export default function SignupForm() {
             <Button
               className="relative group/btn bg-gradient-to-r from-red-500 to-red-600 text-white w-full border-0 hover:from-red-600 hover:to-red-700 h-10"
               type="submit"
-              disabled={!formData.terms}
+              disabled={isLoading || !formData.terms || !passwordsMatch}
             >
-              Create Account
-              <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              {isLoading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                </>
+              )}
               <BottomGradient />
             </Button>
 
@@ -283,6 +319,7 @@ export default function SignupForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
+                disabled={isLoading}
               >
                 <Chrome className="h-4 w-4" />
                 <BottomGradient />
@@ -293,6 +330,7 @@ export default function SignupForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
+                disabled={isLoading}
               >
                 <Github className="h-4 w-4" />
                 <BottomGradient />
@@ -303,6 +341,7 @@ export default function SignupForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
+                disabled={isLoading}
               >
                 <Youtube className="h-4 w-4" />
                 <BottomGradient />

@@ -1,4 +1,204 @@
-# 🎥 YouTube Analyzer
+# YT Analyzer - Full Stack YouTube Analytics Platform
+
+A modern, full-stack YouTube analytics platform built with React, Node.js, and PostgreSQL. Features AI-powered insights, real-time analytics, and a beautiful UI.
+
+## 🚀 Features
+
+### Frontend
+- **Modern React with TypeScript** - Type-safe development
+- **Beautiful UI/UX** - Glass morphism design with animations
+- **Real-time Analytics** - Live data visualization with charts
+- **Authentication** - Secure login/signup with JWT
+- **Responsive Design** - Works on all devices
+- **State Management** - Zustand for global state
+- **API Integration** - Full backend connectivity
+
+### Backend
+- **Node.js with Express** - Fast, scalable API
+- **PostgreSQL Database** - Reliable data storage
+- **Prisma ORM** - Type-safe database operations
+- **JWT Authentication** - Secure user sessions
+- **Role-based Access** - Admin and user roles
+- **RESTful API** - Clean, documented endpoints
+
+## 🛠 Tech Stack
+
+### Frontend
+- React 18 + TypeScript
+- Vite (Build tool)
+- Tailwind CSS + shadcn/ui
+- Framer Motion (Animations)
+- Recharts (Data visualization)
+- Zustand (State management)
+- React Router (Navigation)
+- React Query (Data fetching)
+
+### Backend
+- Node.js + Express
+- TypeScript
+- PostgreSQL
+- Prisma ORM
+- JWT (Authentication)
+- bcrypt (Password hashing)
+- CORS (Cross-origin requests)
+
+### DevOps
+- Docker & Docker Compose
+- Environment-based configuration
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 14+
+- Docker (optional)
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd YT_Analyzer-main
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   npm install
+   
+   # Create .env file
+   cp .env.example .env
+   # Edit .env with your database credentials
+   
+   # Start PostgreSQL (if using Docker)
+   docker-compose up -d postgres
+   
+   # Run database migrations
+   npx prisma migrate dev
+   
+   # Start the backend
+   npm run dev
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   
+   # Start the frontend
+   npm run dev
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost:8081
+   - Backend API: http://localhost:5000
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Backend (.env)**
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/yt_analyzer"
+JWT_SECRET="your-super-secret-jwt-key"
+PORT=5000
+NODE_ENV=development
+```
+
+**Frontend (.env)**
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+## 📊 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/request-password-reset` - Request password reset
+- `POST /api/auth/reset-password` - Reset password
+
+### User Management
+- `GET /api/user/me` - Get current user profile
+- `PUT /api/user/profile` - Update user profile
+- `GET /api/user/all` - Get all users (admin only)
+- `DELETE /api/user/:id` - Delete user (admin only)
+- `PUT /api/user/:id/role` - Change user role (admin only)
+
+### Analytics
+- `GET /api/analytics` - Get analytics with pagination/filtering
+- `GET /api/analytics/:id` - Get specific analytics entry
+- `POST /api/analytics` - Create new analytics entry
+- `PUT /api/analytics/:id` - Update analytics entry
+- `DELETE /api/analytics/:id` - Delete analytics entry
+- `GET /api/analytics/summary` - Get analytics summary
+
+## 🎯 Usage
+
+### Authentication Flow
+1. Register a new account at `/signup`
+2. Login with your credentials at `/login`
+3. Access protected routes (Dashboard, Analytics, etc.)
+4. Use the logout button in the navigation header
+
+### Analytics Dashboard
+- View real-time performance metrics
+- Analyze content distribution (Shorts vs Long-form)
+- Monitor engagement rates and trends
+- Access AI-powered insights
+
+### Data Management
+- Create, edit, and delete analytics entries
+- Filter and sort data by various criteria
+- Export data for external analysis
+- Generate custom reports
+
+## 🔒 Security Features
+
+- **JWT Authentication** - Secure token-based sessions
+- **Password Hashing** - bcrypt for password security
+- **CORS Protection** - Configured for production
+- **Input Validation** - Server-side validation
+- **Role-based Access** - Admin and user permissions
+- **Environment Variables** - Secure configuration management
+
+## 🚀 Deployment
+
+### Docker Deployment
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+```
+
+### Manual Deployment
+1. Set up PostgreSQL database
+2. Configure environment variables
+3. Run database migrations
+4. Build frontend: `npm run build`
+5. Start backend: `npm start`
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Check the documentation
+- Review the API endpoints
+
+---
+
+**Built with ❤️ using modern web technologies**
 
 <div align="center">
 
@@ -129,5 +329,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-Made with ❤️ by [Your Name]
+Made by ""KALP SENGHANI""
 </div> 

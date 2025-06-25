@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   Settings,
@@ -15,7 +15,6 @@ import {
   TrendingUp,
   BarChart3,
   X,
-  MarkAsUnread,
 } from "lucide-react";
 import { GlassCard } from "./glass-card";
 import { Button } from "./button";
@@ -29,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { useAppStore } from "@/lib/store";
 
 interface NavigationHeaderProps {
   onMenuToggle?: () => void;
@@ -45,6 +45,8 @@ interface Notification {
 }
 
 export const NavigationHeader = ({ onMenuToggle }: NavigationHeaderProps) => {
+  const navigate = useNavigate();
+  const { logout, user } = useAppStore();
   const [scrolled, setScrolled] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -130,6 +132,11 @@ export const NavigationHeader = ({ onMenuToggle }: NavigationHeaderProps) => {
     setNotifications((prev) =>
       prev.map((notification) => ({ ...notification, isRead: true })),
     );
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
@@ -227,6 +234,8 @@ export const NavigationHeader = ({ onMenuToggle }: NavigationHeaderProps) => {
                       onMarkAsRead={markAsRead}
                       onMarkAllAsRead={markAllAsRead}
                       unreadCount={unreadNotifications.length}
+                      onLogout={handleLogout}
+                      user={user}
                     />
                   </div>
                 </div>
@@ -315,7 +324,8 @@ export const NavigationHeader = ({ onMenuToggle }: NavigationHeaderProps) => {
                         onMarkAsRead={markAsRead}
                         onMarkAllAsRead={markAllAsRead}
                         unreadCount={unreadNotifications.length}
-                        compact
+                        onLogout={handleLogout}
+                        user={user}
                       />
                     </GlassCard>
                   </motion.div>
@@ -335,6 +345,8 @@ interface ProfileDropdownProps {
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   unreadCount: number;
+  onLogout: () => void;
+  user: any;
   compact?: boolean;
 }
 
@@ -343,6 +355,8 @@ const ProfileDropdown = ({
   onMarkAsRead,
   onMarkAllAsRead,
   unreadCount,
+  onLogout,
+  user,
   compact = false,
 }: ProfileDropdownProps) => {
   const getNotificationTypeColor = (type: Notification["type"]) => {
@@ -393,8 +407,8 @@ const ProfileDropdown = ({
               <User className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="text-sm font-medium">John Doe</p>
-              <p className="text-xs text-white/60">john@ytanalyzer.com</p>
+              <p className="text-sm font-medium">{user?.email || 'User'}</p>
+              <p className="text-xs text-white/60">{user?.email || 'user@example.com'}</p>
             </div>
           </div>
         </DropdownMenuLabel>
@@ -509,7 +523,10 @@ const ProfileDropdown = ({
 
         {/* Sign Out */}
         <div className="py-2">
-          <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-500/[0.1] focus:bg-red-500/[0.1] focus:text-red-300 cursor-pointer px-4 py-2">
+          <DropdownMenuItem 
+            onClick={onLogout}
+            className="text-red-400 hover:text-red-300 hover:bg-red-500/[0.1] focus:bg-red-500/[0.1] focus:text-red-300 cursor-pointer px-4 py-2"
+          >
             <LogOut className="h-4 w-4 mr-3" />
             <span>Sign Out</span>
           </DropdownMenuItem>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   BarChart3,
@@ -46,17 +46,45 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAppStore } from "@/lib/store";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { 
+    fetchAnalytics, 
+    fetchSummary, 
+    analytics, 
+    summary, 
+    isLoading, 
+    error,
+    isAuthenticated 
+  } = useAppStore();
   const [selectedTimeframe, setSelectedTimeframe] = useState("7d");
+
+  // Load data on component mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAnalytics(1, 10);
+      fetchSummary();
+    }
+  }, [isAuthenticated, fetchAnalytics, fetchSummary]);
+
+  // Use real data if available, fallback to mock data
+  const channelStats = summary ? {
+    totalVideos: summary.summary.totalVideos,
+    totalViews: summary.summary.totalViews,
+    totalSubscribers: 0, // Not in API summary
+    avgEngagementRate: summary.summary.avgLikes / summary.summary.avgViews * 100 || 0,
+    shortsViews: summary.summary.totalViews * 0.6, // Estimate from mock data ratio
+    longFormViews: summary.summary.totalViews * 0.4, // Estimate from mock data ratio
+  } : mockChannelStats;
 
   const recentData = mockAnalyticsData.slice(-7);
   const pieData = [
-    { name: "Shorts", value: mockChannelStats.shortsViews, color: "#ff6b6b" },
+    { name: "Shorts", value: channelStats.shortsViews, color: "#ff6b6b" },
     {
       name: "Long-form",
-      value: mockChannelStats.longFormViews,
+      value: channelStats.longFormViews,
       color: "#64b5f6",
     },
   ];
@@ -94,6 +122,45 @@ const Dashboard = () => {
     }
     return null;
   };
+
+  // Show loading state
+  if (isLoading && !analytics.length) {
+    return (
+      <AnimatedBackground>
+        <div className="min-h-screen text-white">
+          <NavigationHeader />
+          <main className="pt-24 pb-8">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AnimatedBackground>
+    );
+  }
+
+  // Show error state
+  if (error && !analytics.length) {
+    return (
+      <AnimatedBackground>
+        <div className="min-h-screen text-white">
+          <NavigationHeader />
+          <main className="pt-24 pb-8">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center">
+                <p className="text-red-300 mb-4">{error}</p>
+                <Button onClick={() => fetchAnalytics(1, 10)}>
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AnimatedBackground>
+    );
+  }
 
   return (
     <AnimatedBackground>
@@ -146,7 +213,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <MetricCard
                 title="Total Videos"
-                value={mockChannelStats.totalVideos.toString()}
+                value={channelStats.totalVideos.toString()}
                 change={12.5}
                 trend="up"
                 icon={<Video className="h-6 w-6" />}
@@ -154,7 +221,7 @@ const Dashboard = () => {
               />
               <MetricCard
                 title="Total Views"
-                value={formatNumber(mockChannelStats.totalViews)}
+                value={formatNumber(channelStats.totalViews)}
                 change={28.3}
                 trend="up"
                 icon={<Eye className="h-6 w-6" />}
@@ -162,7 +229,7 @@ const Dashboard = () => {
               />
               <MetricCard
                 title="Subscribers"
-                value={formatNumber(mockChannelStats.totalSubscribers)}
+                value={formatNumber(channelStats.totalSubscribers)}
                 change={15.7}
                 trend="up"
                 icon={<Users className="h-6 w-6" />}
@@ -170,7 +237,7 @@ const Dashboard = () => {
               />
               <MetricCard
                 title="Engagement Rate"
-                value={`${mockChannelStats.avgEngagementRate}%`}
+                value={`${channelStats.avgEngagementRate}%`}
                 change={5.2}
                 trend="up"
                 icon={<TrendingUp className="h-6 w-6" />}
@@ -198,355 +265,295 @@ const Dashboard = () => {
                         Shorts vs Long-form content over time
                       </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500" />
-                        <span className="text-white/70 text-sm">Shorts</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-blue-500" />
-                        <span className="text-white/70 text-sm">Long-form</span>
-                      </div>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/70 hover:text-white hover:bg-white/[0.1]"
+                      onClick={() => navigate("/analytics")}
+                    >
+                      View Details
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
 
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={recentData}>
-                        <defs>
-                          <linearGradient
-                            id="shortsGradient"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#ff6b6b"
-                              stopOpacity={0.3}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#ff6b6b"
-                              stopOpacity={0.0}
-                            />
-                          </linearGradient>
-                          <linearGradient
-                            id="longformGradient"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#64b5f6"
-                              stopOpacity={0.3}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#64b5f6"
-                              stopOpacity={0.0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="rgba(255,255,255,0.1)"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickFormatter={(value) =>
-                            new Date(value).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          }
-                          stroke="rgba(255,255,255,0.5)"
-                        />
-                        <YAxis
-                          tickFormatter={formatNumber}
-                          stroke="rgba(255,255,255,0.5)"
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area
-                          type="monotone"
-                          dataKey="shortsViews"
-                          stackId="1"
-                          stroke="#ff6b6b"
-                          fill="url(#shortsGradient)"
-                          strokeWidth={2}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="longFormViews"
-                          stackId="1"
-                          stroke="#64b5f6"
-                          fill="url(#longformGradient)"
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={recentData}>
+                      <defs>
+                        <linearGradient
+                          id="shortsGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#ff6b6b"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#ff6b6b"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="longFormGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#64b5f6"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#64b5f6"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(255,255,255,0.1)"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        stroke="rgba(255,255,255,0.5)"
+                        fontSize={12}
+                        tickFormatter={(value) =>
+                          new Date(value).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        }
+                      />
+                      <YAxis
+                        stroke="rgba(255,255,255,0.5)"
+                        fontSize={12}
+                        tickFormatter={(value) => formatNumber(value)}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="shortsViews"
+                        stroke="#ff6b6b"
+                        fill="url(#shortsGradient)"
+                        strokeWidth={2}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="longFormViews"
+                        stroke="#64b5f6"
+                        fill="url(#longFormGradient)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </GlassCard>
+              </motion.div>
+
+              {/* Content Distribution */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <GlassCard variant="interactive" size="lg">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      Content Distribution
+                    </h3>
+                    <p className="text-white/60">
+                      Views by content type
+                    </p>
+                  </div>
+
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: any) => formatNumber(value)}
+                        contentStyle={{
+                          backgroundColor: "rgba(0,0,0,0.8)",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          borderRadius: "8px",
+                          color: "white",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  <div className="mt-4 space-y-2">
+                    {pieData.map((item, index) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span className="text-white/70">{item.name}</span>
+                        </div>
+                        <span className="text-white font-medium">
+                          {formatNumber(item.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+              </motion.div>
+            </div>
+
+            {/* Recent Analytics and AI Insights */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Recent Analytics */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <GlassCard variant="interactive" size="lg">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-1">
+                        Recent Analytics
+                      </h3>
+                      <p className="text-white/60">
+                        Latest performance data
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/70 hover:text-white hover:bg-white/[0.1]"
+                      onClick={() => navigate("/analytics")}
+                    >
+                      View All
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {analytics.slice(0, 5).map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-white/[0.05] border border-white/10"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center">
+                            <BarChart3 className="h-5 w-5 text-white/80" />
+                          </div>
+                          <div>
+                            <h4 className="text-white font-medium text-sm">
+                              {item.title}
+                            </h4>
+                            <p className="text-white/60 text-xs">
+                              {formatNumber(item.views)} views
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-white font-medium text-sm">
+                            {formatNumber(item.likes)}
+                          </div>
+                          <div className="text-white/60 text-xs">likes</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </GlassCard>
               </motion.div>
 
-              {/* Content Distribution & AI Insights */}
-              <div className="space-y-6">
-                {/* Content Distribution */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  <GlassCard variant="interactive">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-gradient-to-r from-red-500/20 to-blue-500/20">
-                        <BarChart3 className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-white">
-                          Content Split
-                        </h3>
-                        <p className="text-white/60 text-sm">Views by format</p>
-                      </div>
+              {/* AI Insights */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+              >
+                <GlassCard variant="interactive" size="lg">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-1">
+                        AI Insights
+                      </h3>
+                      <p className="text-white/60">
+                        Intelligent recommendations
+                      </p>
                     </div>
+                    <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 border-purple-500/30">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      AI Powered
+                    </Badge>
+                  </div>
 
-                    <div className="h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={80}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            content={({ payload }) => {
-                              if (payload && payload[0]) {
-                                return (
-                                  <GlassCard className="p-2">
-                                    <div className="text-white text-sm">
-                                      {payload[0].name}:{" "}
-                                      {formatNumber(Number(payload[0].value))}
-                                    </div>
-                                  </GlassCard>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-6 mt-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full" />
-                        <span className="text-white/70 text-sm">
-                          Shorts (
-                          {Math.round(
-                            (mockChannelStats.shortsViews /
-                              mockChannelStats.totalViews) *
-                              100,
-                          )}
-                          %)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full" />
-                        <span className="text-white/70 text-sm">
-                          Long-form (
-                          {Math.round(
-                            (mockChannelStats.longFormViews /
-                              mockChannelStats.totalViews) *
-                              100,
-                          )}
-                          %)
-                        </span>
-                      </div>
-                    </div>
-                  </GlassCard>
-                </motion.div>
-
-                {/* AI Insights Preview */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                >
-                  <GlassCard variant="accent">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20">
-                        <Sparkles className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-white">
-                          AI Insights
-                        </h3>
-                        <p className="text-white/60 text-sm">
-                          Smart recommendations
-                        </p>
-                      </div>
-                      {unreadInsights.length > 0 && (
-                        <Badge className="ml-auto bg-red-500/20 text-red-400 border-red-500/30">
-                          {unreadInsights.length} new
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                      {mockAIInsights.slice(0, 2).map((insight, index) => (
-                        <motion.div
-                          key={insight.id}
-                          className="p-4 rounded-xl bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.08] transition-all cursor-pointer"
-                          whileHover={{ scale: 1.02 }}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 + index * 0.1 }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="mt-1">
-                              {insight.type === "performance" && (
-                                <TrendingUp className="h-4 w-4 text-green-400" />
-                              )}
-                              {insight.type === "strategy" && (
-                                <Target className="h-4 w-4 text-blue-400" />
-                              )}
-                              {insight.type === "trending" && (
-                                <Activity className="h-4 w-4 text-orange-400" />
-                              )}
-                              {insight.type === "optimization" && (
-                                <Brain className="h-4 w-4 text-purple-400" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-white font-medium text-sm mb-1 line-clamp-1">
-                                {insight.title}
-                              </h4>
-                              <p className="text-white/60 text-xs line-clamp-2">
-                                {insight.content}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <div className="text-xs text-white/40">
-                                  {Math.round(insight.confidenceScore * 100)}%
-                                  confidence
-                                </div>
-                                {!insight.isRead && (
-                                  <div className="w-2 h-2 bg-red-400 rounded-full" />
-                                )}
-                              </div>
+                  <div className="space-y-4">
+                    {unreadInsights.slice(0, 3).map((insight, index) => (
+                      <motion.div
+                        key={insight.id}
+                        className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.7 + index * 0.1 }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+                            <Brain className="h-4 w-4 text-purple-300" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-white font-medium text-sm mb-1">
+                              {insight.title}
+                            </h4>
+                            <p className="text-white/70 text-xs leading-relaxed">
+                              {insight.content}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge
+                                variant="outline"
+                                className="text-xs border-purple-500/30 text-purple-300"
+                              >
+                                {insight.type}
+                              </Badge>
+                              <span className="text-white/50 text-xs">
+                                {Math.round(insight.confidenceScore * 100)}% confidence
+                              </span>
                             </div>
                           </div>
-                        </motion.div>
-                      ))}
-                    </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
 
+                  <div className="mt-6 pt-4 border-t border-white/10">
                     <Button
-                      variant="ghost"
-                      className="w-full mt-4 text-white/70 hover:text-white hover:bg-white/[0.1] border border-white/20"
-                      onClick={() => navigate("/analytics")}
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
                     >
                       View All Insights
-                      <ArrowUpRight className="h-4 w-4 ml-2" />
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
                     </Button>
-                  </GlassCard>
-                </motion.div>
-              </div>
-            </div>
-
-            {/* Recent Videos */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <GlassCard variant="interactive" size="lg">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-1">
-                      Recent Videos
-                    </h3>
-                    <p className="text-white/60">
-                      Your latest content performance
-                    </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    className="text-white/70 hover:text-white hover:bg-white/[0.1]"
-                    onClick={() => navigate("/analytics")}
-                  >
-                    View All
-                    <ArrowUpRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-
-                <div className="grid gap-4">
-                  {mockVideos.slice(0, 4).map((video, index) => (
-                    <motion.div
-                      key={video.id}
-                      className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.15] transition-all cursor-pointer group"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 + index * 0.1 }}
-                      whileHover={{ scale: 1.01 }}
-                    >
-                      <div className="w-20 h-14 bg-gradient-to-br from-white/[0.1] to-white/[0.05] rounded-lg flex items-center justify-center group-hover:from-red-500/20 group-hover:to-blue-500/20 transition-all">
-                        <PlayCircle className="h-6 w-6 text-white/60 group-hover:text-white transition-colors" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-white truncate mb-1">
-                          {video.title}
-                        </h4>
-                        <div className="flex items-center gap-4 text-sm text-white/60">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatDuration(video.duration)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            {formatNumber(video.views)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            {formatNumber(video.likes)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <Badge
-                          variant={
-                            video.format === "short"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                          className={
-                            video.format === "short"
-                              ? "bg-red-500/20 text-red-400 border-red-500/30"
-                              : "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                          }
-                        >
-                          {video.format === "short" ? "Short" : "Long"}
-                        </Badge>
-                        <div className="text-sm text-white/60 mt-1">
-                          {video.engagementRate.toFixed(1)}% engagement
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </GlassCard>
-            </motion.div>
+                </GlassCard>
+              </motion.div>
+            </div>
           </div>
         </main>
       </div>

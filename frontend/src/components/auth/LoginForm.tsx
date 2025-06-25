@@ -16,20 +16,28 @@ import {
   Youtube,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAppStore } from "@/lib/store";
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const { login, isLoading, error, clearError } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted:", formData);
-    // In a real app, handle authentication here
-    navigate("/dashboard");
+    clearError();
+    
+    try {
+      await login(formData.email, formData.password);
+      navigate("/dashboard");
+    } catch (error) {
+      // Error is handled by the store
+      console.error("Login failed:", error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +45,8 @@ export default function LoginForm() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Clear error when user starts typing
+    if (error) clearError();
   };
 
   const handleGoogleSignIn = () => {
@@ -62,6 +72,17 @@ export default function LoginForm() {
             </p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"
+            >
+              <p className="text-red-300 text-sm">{error}</p>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <LabelInputContainer>
               <AnimatedLabel htmlFor="email" className="text-sm">
@@ -78,6 +99,7 @@ export default function LoginForm() {
                   onChange={handleInputChange}
                   className="pl-10 h-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </LabelInputContainer>
@@ -97,11 +119,13 @@ export default function LoginForm() {
                   onChange={handleInputChange}
                   className="pl-10 pr-10 h-10"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -117,6 +141,7 @@ export default function LoginForm() {
                 <input
                   type="checkbox"
                   className="rounded border-white/20 bg-white/[0.05] text-red-500 focus:ring-red-500 focus:ring-offset-0 w-4 h-4"
+                  disabled={isLoading}
                 />
                 <span className="ml-2 text-white/70">Remember me</span>
               </label>
@@ -131,9 +156,19 @@ export default function LoginForm() {
             <Button
               className="relative group/btn bg-gradient-to-r from-red-500 to-red-600 text-white w-full border-0 hover:from-red-600 hover:to-red-700 h-10"
               type="submit"
+              disabled={isLoading}
             >
-              Sign In
-              <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              {isLoading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Signing In...
+                </div>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                </>
+              )}
               <BottomGradient />
             </Button>
 
@@ -147,6 +182,7 @@ export default function LoginForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
+                disabled={isLoading}
               >
                 <Chrome className="h-4 w-4" />
                 <BottomGradient />
@@ -157,6 +193,7 @@ export default function LoginForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
+                disabled={isLoading}
               >
                 <Github className="h-4 w-4" />
                 <BottomGradient />
@@ -167,6 +204,7 @@ export default function LoginForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
+                disabled={isLoading}
               >
                 <Youtube className="h-4 w-4" />
                 <BottomGradient />
