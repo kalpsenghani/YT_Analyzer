@@ -302,8 +302,8 @@ export default function SignupForm() {
                 </div>
               ) : (
                 <>
-                  Create Account
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              Create Account
+              <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                 </>
               )}
               <BottomGradient />

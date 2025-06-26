@@ -83,6 +83,7 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { useAppStore } from "@/lib/store";
+import { DateRange } from 'react-day-picker';
 
 const Analytics = () => {
   const { 
@@ -90,15 +91,13 @@ const Analytics = () => {
     fetchSummary, 
     analytics, 
     summary, 
-    isLoading, 
+    isAnalyticsLoading, 
+    isSummaryLoading, 
     error,
     isAuthenticated 
   } = useAppStore();
   
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     to: new Date(),
   });
@@ -110,13 +109,21 @@ const Analytics = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Load data on component mount
+  // Fetch analytics when user changes page, sort, search, etc.
   useEffect(() => {
     if (isAuthenticated) {
       fetchAnalytics(currentPage, 10, sortBy, sortOrder, searchQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, currentPage, sortBy, sortOrder, searchQuery]);
+
+  // Fetch summary only when authentication changes
+  useEffect(() => {
+    if (isAuthenticated) {
       fetchSummary();
     }
-  }, [isAuthenticated, currentPage, sortBy, sortOrder, searchQuery, fetchAnalytics, fetchSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const extendedData = generateTrendData(30);
 
@@ -203,7 +210,7 @@ const Analytics = () => {
   };
 
   // Show loading state
-  if (isLoading && !analytics.length) {
+  if (isAnalyticsLoading && !analytics.length) {
     return (
       <AnimatedBackground>
         <div className="min-h-screen text-white">
@@ -334,42 +341,42 @@ const Analytics = () => {
 
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={extendedData.slice(-14)}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="rgba(255,255,255,0.1)"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        stroke="rgba(255,255,255,0.5)"
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="rgba(255,255,255,0.1)"
+                            />
+                            <XAxis
+                              dataKey="date"
+                              stroke="rgba(255,255,255,0.5)"
                         fontSize={12}
-                        tickFormatter={(value) =>
-                          format(new Date(value), "MMM dd")
-                        }
-                      />
-                      <YAxis
-                        stroke="rgba(255,255,255,0.5)"
+                              tickFormatter={(value) =>
+                                format(new Date(value), "MMM dd")
+                              }
+                            />
+                            <YAxis
+                              stroke="rgba(255,255,255,0.5)"
                         fontSize={12}
                         tickFormatter={(value) => formatNumber(value)}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Line
-                        type="monotone"
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Line
+                              type="monotone"
                         dataKey="shortsViews"
-                        stroke="#ff6b6b"
+                              stroke="#ff6b6b"
                         strokeWidth={2}
-                        dot={{ fill: "#ff6b6b", strokeWidth: 2, r: 4 }}
+                              dot={{ fill: "#ff6b6b", strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6, stroke: "#ff6b6b", strokeWidth: 2 }}
-                      />
-                      <Line
-                        type="monotone"
+                            />
+                            <Line
+                              type="monotone"
                         dataKey="longFormViews"
-                        stroke="#64b5f6"
+                              stroke="#64b5f6"
                         strokeWidth={2}
-                        dot={{ fill: "#64b5f6", strokeWidth: 2, r: 4 }}
+                              dot={{ fill: "#64b5f6", strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6, stroke: "#64b5f6", strokeWidth: 2 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
                 </GlassCard>
               </motion.div>
 
@@ -387,38 +394,38 @@ const Analytics = () => {
                     <p className="text-white/60">
                       Views vs Engagement Rate
                     </p>
-                  </div>
+                      </div>
 
                   <ResponsiveContainer width="100%" height={300}>
-                    <ScatterChart data={scatterData}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="rgba(255,255,255,0.1)"
-                      />
-                      <XAxis
-                        type="number"
-                        dataKey="x"
-                        name="Views"
-                        stroke="rgba(255,255,255,0.5)"
+                          <ScatterChart data={scatterData}>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="rgba(255,255,255,0.1)"
+                            />
+                            <XAxis
+                              type="number"
+                              dataKey="x"
+                              name="Views"
+                              stroke="rgba(255,255,255,0.5)"
                         fontSize={12}
                         tickFormatter={(value) => formatNumber(value)}
-                      />
-                      <YAxis
-                        type="number"
-                        dataKey="y"
-                        name="Engagement Rate"
-                        stroke="rgba(255,255,255,0.5)"
+                            />
+                            <YAxis
+                              type="number"
+                              dataKey="y"
+                              name="Engagement Rate"
+                              stroke="rgba(255,255,255,0.5)"
                         fontSize={12}
                         tickFormatter={(value) => `${value.toFixed(1)}%`}
-                      />
-                      <Tooltip
-                        content={({ payload }) => {
-                          if (payload && payload[0]) {
-                            const data = payload[0].payload;
-                            return (
+                            />
+                            <Tooltip
+                              content={({ payload }) => {
+                                if (payload && payload[0]) {
+                                  const data = payload[0].payload;
+                                  return (
                               <GlassCard className="p-3 border border-white/20">
                                 <p className="text-white/90 font-medium mb-2">
-                                  {data.title}
+                                          {data.title}
                                 </p>
                                 <div className="space-y-1 text-sm">
                                   <div className="flex items-center gap-2">
@@ -426,28 +433,28 @@ const Analytics = () => {
                                     <span className="text-white font-medium">
                                       {formatNumber(data.x)}
                                     </span>
-                                  </div>
+                                        </div>
                                   <div className="flex items-center gap-2">
                                     <span className="text-white/70">Engagement:</span>
                                     <span className="text-white font-medium">
                                       {data.y.toFixed(1)}%
                                     </span>
-                                  </div>
-                                </div>
-                              </GlassCard>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Scatter
+                                        </div>
+                                      </div>
+                                    </GlassCard>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Scatter
                         dataKey="y"
-                        fill="#64b5f6"
+                              fill="#64b5f6"
                         stroke="rgba(255,255,255,0.3)"
                         strokeWidth={1}
-                      />
-                    </ScatterChart>
-                  </ResponsiveContainer>
+                            />
+                          </ScatterChart>
+                        </ResponsiveContainer>
                 </GlassCard>
               </motion.div>
             </div>
@@ -542,7 +549,7 @@ const Analytics = () => {
                         mode="range"
                         defaultMonth={dateRange.from}
                         selected={dateRange}
-                        onSelect={(range) => setDateRange(range || { from: undefined, to: undefined })}
+                        onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
                         numberOfMonths={2}
                       />
                     </PopoverContent>
@@ -600,30 +607,30 @@ const Analytics = () => {
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-12 bg-gradient-to-br from-white/[0.1] to-white/[0.05] rounded-lg flex items-center justify-center group-hover:from-red-500/20 group-hover:to-blue-500/20 transition-all">
                           <BarChart3 className="h-6 w-6 text-white/60 group-hover:text-white transition-colors" />
-                        </div>
+                      </div>
                         <div>
                           <h4 className="font-medium text-white mb-1">
-                            {video.title}
-                          </h4>
-                          <div className="flex items-center gap-4 text-sm text-white/60">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
+                          {video.title}
+                        </h4>
+                        <div className="flex items-center gap-4 text-sm text-white/60">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
                               {formatDuration(video.duration || 0)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              {formatNumber(video.views)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Heart className="h-3 w-3" />
-                              {formatNumber(video.likes)}
-                            </span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            {formatNumber(video.views)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="h-3 w-3" />
+                            {formatNumber(video.likes)}
+                          </span>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="text-right">
+                      <div className="text-right">
                           <div className="text-white font-medium">
                             {formatNumber(video.comments)}
                           </div>
@@ -635,22 +642,22 @@ const Analytics = () => {
                         >
                           Mixed
                         </Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                               className="text-white/60 hover:text-white hover:bg-white/[0.1]"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>View Details</DropdownMenuItem>
                             <DropdownMenuItem>Edit</DropdownMenuItem>
                             <DropdownMenuItem>Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       </div>
                     </motion.div>
                   ))}

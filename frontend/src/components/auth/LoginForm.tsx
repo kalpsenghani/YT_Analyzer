@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AnimatedLabel } from "@/components/ui/animated-label";
 import { AnimatedInput } from "@/components/ui/animated-input.tsx";
@@ -20,12 +20,18 @@ import { useAppStore } from "@/lib/store";
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAppStore();
+  const { login, isAuthenticated, isLoading, error, clearError } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +39,6 @@ export default function LoginForm() {
     
     try {
       await login(formData.email, formData.password);
-      navigate("/dashboard");
     } catch (error) {
       // Error is handled by the store
       console.error("Login failed:", error);
@@ -52,7 +57,6 @@ export default function LoginForm() {
   const handleGoogleSignIn = () => {
     // In a real app, this would trigger Google OAuth
     console.log("Google sign in");
-    navigate("/dashboard");
   };
 
   return (
@@ -165,8 +169,8 @@ export default function LoginForm() {
                 </div>
               ) : (
                 <>
-                  Sign In
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+              Sign In
+              <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                 </>
               )}
               <BottomGradient />

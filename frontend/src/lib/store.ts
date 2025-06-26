@@ -6,14 +6,16 @@ import type { User, Analytics, AnalyticsSummary } from './api';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
   error: string | null;
+  isAnalyticsLoading: boolean;
+  isSummaryLoading: boolean;
 }
 
 interface AnalyticsState {
   analytics: Analytics[];
   summary: AnalyticsSummary | null;
-  isLoading: boolean;
+  isAnalyticsLoading: boolean;
+  isSummaryLoading: boolean;
   error: string | null;
   pagination: {
     page: number;
@@ -39,7 +41,6 @@ interface AppState extends AuthState, AnalyticsState {
   
   // Utility actions
   clearError: () => void;
-  setLoading: (loading: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -48,7 +49,8 @@ export const useAppStore = create<AppState>()(
       // Initial state
       user: null,
       isAuthenticated: false,
-      isLoading: false,
+      isAnalyticsLoading: false,
+      isSummaryLoading: false,
       error: null,
       analytics: [],
       summary: null,
@@ -56,27 +58,23 @@ export const useAppStore = create<AppState>()(
 
       // Auth actions
       login: async (email: string, password: string) => {
-        set({ isLoading: true, error: null });
+        set({ error: null });
         try {
           await apiClient.login(email, password);
           await get().loadUser();
           set({ isAuthenticated: true });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Login failed' });
-        } finally {
-          set({ isLoading: false });
         }
       },
 
       register: async (email: string, password: string) => {
-        set({ isLoading: true, error: null });
+        set({ error: null });
         try {
           await apiClient.register(email, password);
           set({ error: null });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Registration failed' });
-        } finally {
-          set({ isLoading: false });
         }
       },
 
@@ -104,7 +102,7 @@ export const useAppStore = create<AppState>()(
 
       // Analytics actions
       fetchAnalytics: async (page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', search?: string) => {
-        set({ isLoading: true, error: null });
+        set({ isAnalyticsLoading: true, error: null });
         try {
           const response = await apiClient.getAnalytics(page, limit, sortBy, sortOrder, search);
           set({
@@ -115,24 +113,24 @@ export const useAppStore = create<AppState>()(
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to fetch analytics' });
         } finally {
-          set({ isLoading: false });
+          set({ isAnalyticsLoading: false });
         }
       },
 
       fetchSummary: async () => {
-        set({ isLoading: true, error: null });
+        set({ isSummaryLoading: true, error: null });
         try {
           const summary = await apiClient.getAnalyticsSummary();
           set({ summary, error: null });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to fetch summary' });
         } finally {
-          set({ isLoading: false });
+          set({ isSummaryLoading: false });
         }
       },
 
       createAnalytics: async (data) => {
-        set({ isLoading: true, error: null });
+        set({ error: null });
         try {
           await apiClient.createAnalytics(data);
           // Refresh analytics list
@@ -140,13 +138,11 @@ export const useAppStore = create<AppState>()(
           await get().fetchSummary();
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to create analytics' });
-        } finally {
-          set({ isLoading: false });
         }
       },
 
       updateAnalytics: async (id, data) => {
-        set({ isLoading: true, error: null });
+        set({ error: null });
         try {
           await apiClient.updateAnalytics(id, data);
           // Refresh analytics list
@@ -154,13 +150,11 @@ export const useAppStore = create<AppState>()(
           await get().fetchSummary();
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to update analytics' });
-        } finally {
-          set({ isLoading: false });
         }
       },
 
       deleteAnalytics: async (id) => {
-        set({ isLoading: true, error: null });
+        set({ error: null });
         try {
           await apiClient.deleteAnalytics(id);
           // Refresh analytics list
@@ -168,14 +162,11 @@ export const useAppStore = create<AppState>()(
           await get().fetchSummary();
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to delete analytics' });
-        } finally {
-          set({ isLoading: false });
         }
       },
 
       // Utility actions
       clearError: () => set({ error: null }),
-      setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
       name: 'app-storage',

@@ -55,7 +55,7 @@ const Dashboard = () => {
     fetchSummary, 
     analytics, 
     summary, 
-    isLoading, 
+    isAnalyticsLoading, 
     error,
     isAuthenticated 
   } = useAppStore();
@@ -67,7 +67,8 @@ const Dashboard = () => {
       fetchAnalytics(1, 10);
       fetchSummary();
     }
-  }, [isAuthenticated, fetchAnalytics, fetchSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Use real data if available, fallback to mock data
   const channelStats = summary ? {
@@ -124,7 +125,7 @@ const Dashboard = () => {
   };
 
   // Show loading state
-  if (isLoading && !analytics.length) {
+  if (isAnalyticsLoading && !analytics.length) {
     return (
       <AnimatedBackground>
         <div className="min-h-screen text-white">
