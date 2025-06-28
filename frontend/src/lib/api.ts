@@ -201,6 +201,62 @@ class ApiClient {
   async getAnalyticsSummary(): Promise<AnalyticsSummary> {
     return this.request('/analytics/summary');
   }
+
+  // YouTube endpoints
+  async getYouTubeAuthUrl(): Promise<{ authUrl: string }> {
+    return this.request('/youtube/auth-url');
+  }
+
+  async handleYouTubeCallback(code: string): Promise<{ success: boolean; message: string; channels: any[] }> {
+    return this.request('/youtube/callback', {
+      method: 'POST',
+      body: JSON.stringify({ code })
+    });
+  }
+
+  async getConnectedChannels(): Promise<any[]> {
+    return this.request('/youtube/channels');
+  }
+
+  async syncChannelData(channelId: number): Promise<{ success: boolean; message: string; videosCount: number; videos: any[] }> {
+    return this.request(`/youtube/channels/${channelId}/sync`, {
+      method: 'POST'
+    });
+  }
+
+  async disconnectChannel(channelId: number): Promise<{ success: boolean; message: string }> {
+    return this.request(`/youtube/channels/${channelId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getChannelAnalytics(channelId: number): Promise<any> {
+    return this.request(`/youtube/channels/${channelId}/analytics`);
+  }
+
+  // Combined analytics endpoints
+  async getCombinedAnalytics(
+    page = 1,
+    limit = 10,
+    sortBy = 'publishedAt',
+    sortOrder: 'asc' | 'desc' = 'desc',
+    search?: string,
+    format?: string
+  ): Promise<PaginatedResponse<any>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      sortBy,
+      sortOrder,
+      ...(search && { search }),
+      ...(format && { format })
+    });
+    return this.request(`/analytics/combined?${params}`);
+  }
+
+  async getCombinedSummary(): Promise<any> {
+    return this.request('/analytics/combined-summary');
+  }
 }
 
 export const apiClient = new ApiClient(); 

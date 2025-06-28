@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import {
   CalendarIcon,
   Filter,
@@ -84,8 +85,10 @@ import {
 import { format } from "date-fns";
 import { useAppStore } from "@/lib/store";
 import { DateRange } from 'react-day-picker';
+import { YouTubeConnection } from "@/components/youtube/YouTubeConnection";
 
 const Analytics = () => {
+  const [searchParams] = useSearchParams();
   const { 
     fetchAnalytics, 
     fetchSummary, 
@@ -94,7 +97,15 @@ const Analytics = () => {
     isAnalyticsLoading, 
     isSummaryLoading, 
     error,
-    isAuthenticated 
+    isAuthenticated,
+    // YouTube state
+    connectedChannels,
+    fetchConnectedChannels,
+    fetchCombinedAnalytics,
+    fetchCombinedSummary,
+    combinedAnalytics,
+    combinedSummary,
+    isCombinedLoading
   } = useAppStore();
   
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -108,33 +119,80 @@ const Analytics = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [youtubeMessage, setYoutubeMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Handle YouTube OAuth callback messages
+  useEffect(() => {
+    const youtubeStatus = searchParams.get('youtube');
+    const message = searchParams.get('message');
+    const channels = searchParams.get('channels');
+
+    if (youtubeStatus === 'success') {
+      setYoutubeMessage({
+        type: 'success',
+        message: `Successfully connected ${channels || 0} YouTube channel(s)!`
+      });
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (youtubeStatus === 'error') {
+      setYoutubeMessage({
+        type: 'error',
+        message: message || 'Failed to connect YouTube account.'
+      });
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams]);
 
   // Fetch analytics when user changes page, sort, search, etc.
   useEffect(() => {
     if (isAuthenticated) {
-      fetchAnalytics(currentPage, 10, sortBy, sortOrder, searchQuery);
+      if (connectedChannels.length > 0) {
+        // Use combined analytics if YouTube is connected
+        fetchCombinedAnalytics(currentPage, 10, sortBy, sortOrder, searchQuery, selectedFormat);
+      } else {
+        // Use regular analytics if no YouTube connection
+        fetchAnalytics(currentPage, 10, sortBy, sortOrder, searchQuery);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, currentPage, sortBy, sortOrder, searchQuery]);
+  }, [isAuthenticated, currentPage, sortBy, sortOrder, searchQuery, selectedFormat, connectedChannels.length]);
 
   // Fetch summary only when authentication changes
   useEffect(() => {
     if (isAuthenticated) {
-      fetchSummary();
+      if (connectedChannels.length > 0) {
+        fetchCombinedSummary();
+      } else {
+        fetchSummary();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, connectedChannels.length]);
+
+  // Fetch connected channels on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchConnectedChannels();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const extendedData = generateTrendData(30);
 
-  // Use real analytics data if available, fallback to mock data
-  const filteredVideos = analytics.length > 0 ? analytics : mockVideos;
+  // Use combined analytics data if available, fallback to regular analytics, then mock data
+  const filteredVideos = combinedAnalytics.length > 0 ? combinedAnalytics : 
+                        analytics.length > 0 ? analytics : mockVideos;
+  
+  // Use combined summary if available, fallback to regular summary
+  const currentSummary = combinedSummary || summary;
   
   const scatterData = filteredVideos.map((video) => ({
     x: video.views,
     y: (video.likes / video.views) * 100, // Calculate engagement rate
     z: video.comments,
-    format: 'mixed', // API doesn't have format field
+    format: video.isShort ? 'shorts' : 'long-form',
     title: video.title,
   }));
 
@@ -142,7 +200,7 @@ const Analytics = () => {
     {
       label: "Total Views",
       value: formatNumber(
-        summary ? summary.summary.totalViews : extendedData.reduce((sum, item) => sum + item.shortsViews, 0) +
+        currentSummary ? currentSummary.summary.totalViews : extendedData.reduce((sum, item) => sum + item.shortsViews, 0) +
           extendedData.reduce((sum, item) => sum + item.longFormViews, 0),
       ),
       change: 23.5,
@@ -151,14 +209,14 @@ const Analytics = () => {
     },
     {
       label: "Avg Engagement",
-      value: summary ? `${((summary.summary.avgLikes / summary.summary.avgViews) * 100).toFixed(1)}%` : "11.4%",
+      value: currentSummary ? `${((currentSummary.summary.avgLikes / currentSummary.summary.avgViews) * 100).toFixed(1)}%` : "11.4%",
       change: 12.8,
       trend: "up" as const,
       icon: <Heart className="h-5 w-5" />,
     },
     {
       label: "Total Videos",
-      value: summary ? summary.summary.totalVideos.toString() : filteredVideos.length.toString(),
+      value: currentSummary ? currentSummary.summary.totalVideos.toString() : filteredVideos.length.toString(),
       change: 5.2,
       trend: "up" as const,
       icon: <PlayCircle className="h-5 w-5" />,
@@ -293,6 +351,29 @@ const Analytics = () => {
                 </div>
               </div>
             </motion.div>
+
+            {/* YouTube OAuth Message */}
+            {youtubeMessage && (
+              <motion.div
+                className={`mb-6 p-4 rounded-lg border ${
+                  youtubeMessage.type === 'success' 
+                    ? 'bg-green-500/20 border-green-500/30 text-green-100' 
+                    : 'bg-red-500/20 border-red-500/30 text-red-100'
+                }`}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center gap-2">
+                  {youtubeMessage.type === 'success' ? (
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  ) : (
+                    <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                  )}
+                  <span className="font-medium">{youtubeMessage.message}</span>
+                </div>
+              </motion.div>
+            )}
 
             {/* Performance Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -458,6 +539,15 @@ const Analytics = () => {
                 </GlassCard>
               </motion.div>
             </div>
+
+            {/* YouTube Connection Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+            >
+              <YouTubeConnection />
+            </motion.div>
 
             {/* Analytics Table Section */}
             <motion.div
@@ -640,7 +730,7 @@ const Analytics = () => {
                           variant="outline"
                           className="border-white/20 text-white/70"
                         >
-                          Mixed
+                          {video.isShort ? 'Shorts' : 'Long-form'}
                         </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -664,10 +754,10 @@ const Analytics = () => {
                 </div>
 
                 {/* Pagination */}
-                {summary && summary.recentAnalytics.length > 0 && (
+                {currentSummary && currentSummary.recentAnalytics.length > 0 && (
                   <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
                     <div className="text-white/60 text-sm">
-                      Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, summary.summary.totalVideos)} of {summary.summary.totalVideos} results
+                      Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, currentSummary.summary.totalVideos)} of {currentSummary.summary.totalVideos} results
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -683,7 +773,7 @@ const Analytics = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setCurrentPage(currentPage + 1)}
-                        disabled={currentPage * 10 >= summary.summary.totalVideos}
+                        disabled={currentPage * 10 >= currentSummary.summary.totalVideos}
                         className="border-white/20 text-white hover:bg-white/[0.1]"
                       >
                         Next
