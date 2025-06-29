@@ -45,8 +45,6 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Contact form submitted:", formData);
-    // In a real app, handle form submission here
     alert("Thank you for your message! We'll get back to you within 24 hours.");
     setFormData({
       name: "",

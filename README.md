@@ -330,4 +330,88 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 Made by ""KALP SENGHANI""
-</div> 
+</div>
+
+# YouTube Analytics Platform - Production Deployment Guide
+
+## Overview
+This guide will help you deploy your YouTube Analytics platform to production using **Vercel** (for the frontend) and **Render** or **Railway** (for the backend). Both are free and easy to use for small projects.
+
+---
+
+## 1. Frontend Deployment (Vercel)
+
+### Prerequisites
+- [Vercel account](https://vercel.com/)
+- [GitHub account](https://github.com/)
+
+### Steps
+1. **Push your frontend code to a GitHub repository.**
+2. **Go to [Vercel](https://vercel.com/) and click 'New Project'.**
+3. **Import your GitHub repo.**
+4. **Set Environment Variables:**
+   - `VITE_API_BASE_URL` = The URL of your deployed backend (e.g., `https://your-backend.onrender.com/api`)
+5. **Click 'Deploy'.**
+6. **After deployment, update your backend CORS settings to allow your Vercel frontend domain.**
+
+---
+
+## 2. Backend Deployment (Render or Railway)
+
+### Prerequisites
+- [Render account](https://render.com/) or [Railway account](https://railway.app/)
+- [GitHub account](https://github.com/)
+- (Optional) PostgreSQL database (Render/Railway can provision one for you)
+
+### Steps
+1. **Push your backend code to a GitHub repository.**
+2. **Go to [Render](https://render.com/) or [Railway](https://railway.app/) and create a new Web Service.**
+3. **Connect your GitHub repo.**
+4. **Set Environment Variables:**
+   - `DATABASE_URL` = Your PostgreSQL connection string
+   - `JWT_SECRET` = A strong secret for JWT tokens
+   - `YOUTUBE_CLIENT_ID` = Your Google API client ID
+   - `YOUTUBE_CLIENT_SECRET` = Your Google API client secret
+   - `YOUTUBE_REDIRECT_URI` = Your backend's OAuth callback URL (e.g., `https://your-backend.onrender.com/api/youtube/callback`)
+   - `CORS_ORIGIN` = Your Vercel frontend URL (e.g., `https://your-frontend.vercel.app`)
+5. **Set the build/start commands:**
+   - Build: `npm run build`
+   - Start: `npm start`
+6. **Deploy!**
+
+---
+
+## 3. Environment Variables Reference
+
+| Variable                | Where         | Example Value                                 |
+|------------------------ |-------------- |-----------------------------------------------|
+| VITE_API_BASE_URL       | Frontend      | https://your-backend.onrender.com/api         |
+| DATABASE_URL            | Backend       | (from Render/Railway Postgres)                |
+| JWT_SECRET              | Backend       | supersecretkey                               |
+| YOUTUBE_CLIENT_ID       | Backend       | (from Google Cloud Console)                   |
+| YOUTUBE_CLIENT_SECRET   | Backend       | (from Google Cloud Console)                   |
+| YOUTUBE_REDIRECT_URI    | Backend       | https://your-backend.onrender.com/api/youtube/callback |
+| CORS_ORIGIN             | Backend       | https://your-frontend.vercel.app              |
+
+---
+
+## 4. Final Steps
+- Test your deployed frontend and backend.
+- Make sure you can sign up, connect a YouTube channel, and see real analytics.
+- Share your Vercel frontend link with creators for feedback!
+
+---
+
+## 5. Troubleshooting
+- **CORS errors?** Make sure `CORS_ORIGIN` in your backend matches your Vercel frontend URL.
+- **OAuth errors?** Double-check your Google Cloud Console credentials and redirect URIs.
+- **Database errors?** Make sure your `DATABASE_URL` is correct and the database is migrated (`npx prisma migrate deploy`).
+
+---
+
+## 6. Need Help?
+- Open an issue on your GitHub repo or contact your developer.
+
+---
+
+**Enjoy your production-ready YouTube Analytics platform!** 

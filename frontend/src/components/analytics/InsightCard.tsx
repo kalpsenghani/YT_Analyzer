@@ -3,10 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Zap, Brain, TrendingUp, Target, Activity } from "lucide-react";
-import type { AIInsight } from "@/lib/mockData";
 
 interface InsightCardProps {
-  insight: AIInsight;
+  insight: {
+    id: string;
+    type: string;
+    title: string;
+    content: string;
+    confidenceScore: number;
+    isRead: boolean;
+    createdAt: string;
+  };
   onMarkAsRead?: (id: string) => void;
   delay?: number;
 }

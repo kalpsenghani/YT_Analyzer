@@ -18,11 +18,18 @@ import {
   ComposedChart,
 } from "recharts";
 import { TrendingUp, Download, Maximize } from "lucide-react";
-import { formatNumber } from "@/lib/mockData";
-import type { AnalyticsData } from "@/lib/mockData";
+import { formatNumber } from "@/lib/utils";
 
 interface PerformanceChartProps {
-  data: AnalyticsData[];
+  data: Array<{
+    date: string;
+    shortsViews: number;
+    longFormViews: number;
+    shortsEngagement: number;
+    longFormEngagement: number;
+    shortsWatchTime?: number;
+    longFormWatchTime?: number;
+  }>;
   title: string;
   description?: string;
   showTabs?: boolean;

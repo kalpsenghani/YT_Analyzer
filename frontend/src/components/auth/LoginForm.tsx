@@ -20,12 +20,13 @@ import { useAppStore } from "@/lib/store";
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading, error, clearError } = useAppStore();
+  const { login, isAuthenticated, error, clearError } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -36,12 +37,15 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
+    setIsLoading(true);
     
     try {
       await login(formData.email, formData.password);
     } catch (error) {
       // Error is handled by the store
       console.error("Login failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,7 +60,6 @@ export default function LoginForm() {
 
   const handleGoogleSignIn = () => {
     // In a real app, this would trigger Google OAuth
-    console.log("Google sign in");
   };
 
   return (

@@ -21,7 +21,7 @@ import { useAppStore } from "@/lib/store";
 
 export default function SignupForm() {
   const navigate = useNavigate();
-  const { register, isLoading, error, clearError } = useAppStore();
+  const { register, error, clearError } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,6 +32,7 @@ export default function SignupForm() {
     confirmPassword: "",
     terms: false,
   });
+  const [localLoading, setLocalLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,12 +44,15 @@ export default function SignupForm() {
     clearError();
     
     try {
+      setLocalLoading(true);
       await register(formData.email, formData.password);
       // Registration successful, redirect to login
       navigate("/login");
     } catch (error) {
       // Error is handled by the store
       console.error("Registration failed:", error);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -64,7 +68,6 @@ export default function SignupForm() {
 
   const handleGoogleSignUp = () => {
     // In a real app, this would trigger Google OAuth
-    console.log("Google sign up");
     navigate("/dashboard");
   };
 
@@ -120,7 +123,7 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="h-10"
                   required
-                  disabled={isLoading}
+                  disabled={localLoading}
                 />
               </LabelInputContainer>
 
@@ -137,7 +140,7 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="h-10"
                   required
-                  disabled={isLoading}
+                  disabled={localLoading}
                 />
               </LabelInputContainer>
             </div>
@@ -158,7 +161,7 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="pl-10 h-10"
                   required
-                  disabled={isLoading}
+                  disabled={localLoading}
                 />
               </div>
             </LabelInputContainer>
@@ -179,13 +182,13 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="pl-10 pr-10 h-10"
                   required
-                  disabled={isLoading}
+                  disabled={localLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                  disabled={isLoading}
+                  disabled={localLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -225,13 +228,13 @@ export default function SignupForm() {
                   onChange={handleInputChange}
                   className="pl-10 pr-10 h-10"
                   required
-                  disabled={isLoading}
+                  disabled={localLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                  disabled={isLoading}
+                  disabled={localLoading}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -276,7 +279,7 @@ export default function SignupForm() {
                 onChange={handleInputChange}
                 className="mt-1 rounded border-white/20 bg-white/[0.05] text-red-500 focus:ring-red-500 focus:ring-offset-0 w-4 h-4"
                 required
-                disabled={isLoading}
+                disabled={localLoading}
               />
               <label htmlFor="terms" className="text-sm text-white/70 leading-relaxed">
                 I agree to the{" "}
@@ -293,9 +296,9 @@ export default function SignupForm() {
             <Button
               className="relative group/btn bg-gradient-to-r from-red-500 to-red-600 text-white w-full border-0 hover:from-red-600 hover:to-red-700 h-10"
               type="submit"
-              disabled={isLoading || !formData.terms || !passwordsMatch}
+              disabled={localLoading || !formData.terms || !passwordsMatch}
             >
-              {isLoading ? (
+              {localLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Creating Account...
@@ -319,7 +322,7 @@ export default function SignupForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
-                disabled={isLoading}
+                disabled={localLoading}
               >
                 <Chrome className="h-4 w-4" />
                 <BottomGradient />
@@ -330,7 +333,7 @@ export default function SignupForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
-                disabled={isLoading}
+                disabled={localLoading}
               >
                 <Github className="h-4 w-4" />
                 <BottomGradient />
@@ -341,7 +344,7 @@ export default function SignupForm() {
                 variant="outline"
                 size="sm"
                 className="relative group/btn border-white/20 text-white hover:bg-white/[0.1] hover:border-white/30 p-2 h-10"
-                disabled={isLoading}
+                disabled={localLoading}
               >
                 <Youtube className="h-4 w-4" />
                 <BottomGradient />

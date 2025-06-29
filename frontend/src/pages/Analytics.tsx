@@ -47,14 +47,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import {
-  mockVideos,
-  mockAnalyticsData,
-  mockAIInsights,
-  formatNumber,
-  formatDuration,
-  generateTrendData,
-} from "@/lib/mockData";
+import { formatNumber, formatDuration } from "@/lib/utils";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -98,6 +91,7 @@ const Analytics = () => {
     isSummaryLoading, 
     error,
     isAuthenticated,
+    user,
     // YouTube state
     connectedChannels,
     fetchConnectedChannels,
@@ -147,7 +141,7 @@ const Analytics = () => {
 
   // Fetch analytics when user changes page, sort, search, etc.
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       if (connectedChannels.length > 0) {
         // Use combined analytics if YouTube is connected
         fetchCombinedAnalytics(currentPage, 10, sortBy, sortOrder, searchQuery, selectedFormat);
@@ -157,7 +151,7 @@ const Analytics = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, currentPage, sortBy, sortOrder, searchQuery, selectedFormat, connectedChannels.length]);
+  }, [isAuthenticated, user, currentPage, sortBy, sortOrder, searchQuery, selectedFormat, connectedChannels.length]);
 
   // Fetch summary only when authentication changes
   useEffect(() => {
@@ -179,11 +173,8 @@ const Analytics = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  const extendedData = generateTrendData(30);
-
-  // Use combined analytics data if available, fallback to regular analytics, then mock data
-  const filteredVideos = combinedAnalytics.length > 0 ? combinedAnalytics : 
-                        analytics.length > 0 ? analytics : mockVideos;
+  // Use only real data, do not fallback to mock data
+  const filteredVideos = combinedAnalytics.length > 0 ? combinedAnalytics : analytics;
   
   // Use combined summary if available, fallback to regular summary
   const currentSummary = combinedSummary || summary;
@@ -200,8 +191,7 @@ const Analytics = () => {
     {
       label: "Total Views",
       value: formatNumber(
-        currentSummary ? currentSummary.summary.totalViews : extendedData.reduce((sum, item) => sum + item.shortsViews, 0) +
-          extendedData.reduce((sum, item) => sum + item.longFormViews, 0),
+        currentSummary ? currentSummary.summary.totalViews : 0,
       ),
       change: 23.5,
       trend: "up" as const,
@@ -268,7 +258,7 @@ const Analytics = () => {
   };
 
   // Show loading state
-  if (isAnalyticsLoading && !analytics.length) {
+  if (isAnalyticsLoading && !filteredVideos.length) {
     return (
       <AnimatedBackground>
         <div className="min-h-screen text-white">
@@ -286,7 +276,7 @@ const Analytics = () => {
   }
 
   // Show error state
-  if (error && !analytics.length) {
+  if (error && !filteredVideos.length) {
     return (
       <AnimatedBackground>
         <div className="min-h-screen text-white">
@@ -298,6 +288,23 @@ const Analytics = () => {
                 <Button onClick={() => fetchAnalytics(1, 10)}>
                   Retry
                 </Button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AnimatedBackground>
+    );
+  }
+
+  if (!currentSummary) {
+    return (
+      <AnimatedBackground>
+        <div className="min-h-screen text-white">
+          <NavigationHeader />
+          <main className="pt-24 pb-8">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
               </div>
             </div>
           </main>
@@ -421,13 +428,13 @@ const Analytics = () => {
                   </div>
 
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={extendedData.slice(-14)}>
+                    <LineChart data={filteredVideos.slice(-14)}>
                             <CartesianGrid
                               strokeDasharray="3 3"
                               stroke="rgba(255,255,255,0.1)"
                             />
                             <XAxis
-                              dataKey="date"
+                              dataKey="createdAt"
                               stroke="rgba(255,255,255,0.5)"
                         fontSize={12}
                               tickFormatter={(value) =>
@@ -442,19 +449,11 @@ const Analytics = () => {
                             <Tooltip content={<CustomTooltip />} />
                             <Line
                               type="monotone"
-                        dataKey="shortsViews"
+                        dataKey="views"
                               stroke="#ff6b6b"
                         strokeWidth={2}
                               dot={{ fill: "#ff6b6b", strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6, stroke: "#ff6b6b", strokeWidth: 2 }}
-                            />
-                            <Line
-                              type="monotone"
-                        dataKey="longFormViews"
-                              stroke="#64b5f6"
-                        strokeWidth={2}
-                              dot={{ fill: "#64b5f6", strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: "#64b5f6", strokeWidth: 2 }}
                             />
                           </LineChart>
                         </ResponsiveContainer>

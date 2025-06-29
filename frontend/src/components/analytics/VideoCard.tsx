@@ -18,11 +18,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Video } from "@/lib/mockData";
-import { formatNumber, formatDuration } from "@/lib/mockData";
+import { formatNumber, formatDuration } from "@/lib/utils";
 
 interface VideoCardProps {
-  video: Video;
+  video: {
+    id: string;
+    title: string;
+    duration: number;
+    format: string;
+    views: number;
+    likes: number;
+    comments: number;
+    publishedAt: string;
+    thumbnailUrl: string;
+    engagementRate: number;
+    ctr: number;
+  };
   showActions?: boolean;
   compact?: boolean;
   delay?: number;

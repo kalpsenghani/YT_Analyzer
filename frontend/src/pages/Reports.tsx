@@ -48,7 +48,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import { formatNumber } from "@/lib/mockData";
 
 interface Report {
   id: string;
@@ -75,62 +74,14 @@ const Reports = () => {
   const [activeTab, setActiveTab] = useState("reports");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
-  const mockReports: Report[] = [
-    {
-      id: "1",
-      name: "Monthly Performance Summary",
-      type: "performance",
-      status: "completed",
-      createdAt: "2024-01-15T10:30:00Z",
-      fileSize: "2.4 MB",
-      downloadUrl: "#",
-      description:
-        "Comprehensive analysis of channel performance for January 2024",
-      metrics: ["Views", "Engagement", "Subscribers", "Watch Time"],
-    },
-    {
-      id: "2",
-      name: "Shorts vs Long-form Comparison",
-      type: "comparison",
-      status: "completed",
-      createdAt: "2024-01-14T14:20:00Z",
-      fileSize: "1.8 MB",
-      downloadUrl: "#",
-      description: "Detailed comparison of content format performance",
-      metrics: ["Views", "Engagement Rate", "CTR", "Retention"],
-    },
-    {
-      id: "3",
-      name: "AI Insights Weekly Report",
-      type: "insights",
-      status: "generating",
-      createdAt: "2024-01-16T09:00:00Z",
-      fileSize: "Processing...",
-      description: "AI-powered insights and recommendations",
-      metrics: ["Performance Patterns", "Growth Opportunities", "Trends"],
-    },
-    {
-      id: "4",
-      name: "Q4 2023 Analytics Report",
-      type: "custom",
-      status: "completed",
-      createdAt: "2024-01-01T12:00:00Z",
-      fileSize: "4.2 MB",
-      downloadUrl: "#",
-      description: "Quarterly performance review with custom metrics",
-      metrics: ["Revenue", "Growth Rate", "Top Videos", "Demographics"],
-    },
-    {
-      id: "5",
-      name: "Content Strategy Report",
-      type: "insights",
-      status: "scheduled",
-      createdAt: "2024-01-20T08:00:00Z",
-      fileSize: "Scheduled",
-      description: "Strategic recommendations for next quarter",
-      metrics: ["Content Mix", "Posting Schedule", "Audience Analysis"],
-    },
-  ];
+  // TODO: Fetch real reports from backend or generate from analytics data
+  const mockReports: Report[] = [];
+  // Placeholder message for now
+  const reportsPlaceholder = (
+    <div className="text-center text-gray-400 py-12">
+      <p>No reports available yet. Real reports will be shown here once integrated with backend data.</p>
+    </div>
+  );
 
   const reportTemplates: ReportTemplate[] = [
     {
@@ -212,7 +163,6 @@ const Reports = () => {
   };
 
   const handleGenerateReport = (templateId: string) => {
-    console.log("Generating report from template:", templateId);
     // Implement report generation logic
   };
 
@@ -317,124 +267,128 @@ const Reports = () => {
 
                   {/* Reports List */}
                   <div className="grid gap-4">
-                    {mockReports.map((report, index) => (
-                      <motion.div
-                        key={report.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + index * 0.05 }}
-                      >
-                        <GlassCard
-                          variant="interactive"
-                          className="hover:scale-[1.01]"
+                    {mockReports.length > 0 ? (
+                      mockReports.map((report, index) => (
+                        <motion.div
+                          key={report.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 + index * 0.05 }}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20">
-                              <FileText className="h-6 w-6 text-white" />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-1">
-                                <h3 className="text-lg font-semibold text-white truncate">
-                                  {report.name}
-                                </h3>
-                                <Badge
-                                  className={getStatusColor(report.status)}
-                                >
-                                  {getStatusIcon(report.status)}
-                                  <span className="ml-1 capitalize">
-                                    {report.status}
-                                  </span>
-                                </Badge>
+                          <GlassCard
+                            variant="interactive"
+                            className="hover:scale-[1.01]"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20">
+                                <FileText className="h-6 w-6 text-white" />
                               </div>
-                              <p className="text-white/60 text-sm mb-2">
-                                {report.description}
-                              </p>
-                              <div className="flex items-center gap-4 text-xs text-white/50">
-                                <span>
-                                  Created:{" "}
-                                  {format(
-                                    new Date(report.createdAt),
-                                    "MMM dd, yyyy",
-                                  )}
-                                </span>
-                                <span>Size: {report.fileSize}</span>
-                                <div className="flex items-center gap-1">
-                                  <span>Metrics:</span>
-                                  {report.metrics.slice(0, 2).map((metric) => (
-                                    <Badge
-                                      key={metric}
-                                      variant="outline"
-                                      className="text-xs bg-white/[0.05] border-white/20 text-white/70"
-                                    >
-                                      {metric}
-                                    </Badge>
-                                  ))}
-                                  {report.metrics.length > 2 && (
-                                    <span className="text-white/40">
-                                      +{report.metrics.length - 2} more
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <h3 className="text-lg font-semibold text-white truncate">
+                                    {report.name}
+                                  </h3>
+                                  <Badge
+                                    className={getStatusColor(report.status)}
+                                  >
+                                    {getStatusIcon(report.status)}
+                                    <span className="ml-1 capitalize">
+                                      {report.status}
                                     </span>
-                                  )}
+                                  </Badge>
+                                </div>
+                                <p className="text-white/60 text-sm mb-2">
+                                  {report.description}
+                                </p>
+                                <div className="flex items-center gap-4 text-xs text-white/50">
+                                  <span>
+                                    Created:{" "}
+                                    {format(
+                                      new Date(report.createdAt),
+                                      "MMM dd, yyyy",
+                                    )}
+                                  </span>
+                                  <span>Size: {report.fileSize}</span>
+                                  <div className="flex items-center gap-1">
+                                    <span>Metrics:</span>
+                                    {report.metrics.slice(0, 2).map((metric) => (
+                                      <Badge
+                                        key={metric}
+                                        variant="outline"
+                                        className="text-xs bg-white/[0.05] border-white/20 text-white/70"
+                                      >
+                                        {metric}
+                                      </Badge>
+                                    ))}
+                                    {report.metrics.length > 2 && (
+                                      <span className="text-white/40">
+                                        +{report.metrics.length - 2} more
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex items-center gap-2">
-                              {report.status === "completed" && (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-white/70 hover:text-white hover:bg-white/[0.1] border-white/20"
+                              <div className="flex items-center gap-2">
+                                {report.status === "completed" && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-white/70 hover:text-white hover:bg-white/[0.1] border-white/20"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-white/70 hover:text-white hover:bg-white/[0.1] border-white/20"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-white/60 hover:text-white"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="bg-black/90 backdrop-blur-xl border-white/20 text-white"
                                   >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-white/70 hover:text-white hover:bg-white/[0.1] border-white/20"
-                                  >
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0 text-white/60 hover:text-white"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="bg-black/90 backdrop-blur-xl border-white/20 text-white"
-                                >
-                                  <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/[0.1]">
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/[0.1]">
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Duplicate
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/[0.1]">
-                                    <Share className="h-4 w-4 mr-2" />
-                                    Share
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-500/[0.1]">
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                                    <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/[0.1]">
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/[0.1]">
+                                      <Copy className="h-4 w-4 mr-2" />
+                                      Duplicate
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/[0.1]">
+                                      <Share className="h-4 w-4 mr-2" />
+                                      Share
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-500/[0.1]">
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                          </div>
-                        </GlassCard>
-                      </motion.div>
-                    ))}
+                          </GlassCard>
+                        </motion.div>
+                      ))
+                    ) : (
+                      reportsPlaceholder
+                    )}
                   </div>
                 </TabsContent>
 

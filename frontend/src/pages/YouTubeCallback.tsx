@@ -14,17 +14,16 @@ const YouTubeCallback: React.FC = () => {
   const { handleYouTubeCallback } = useAppStore();
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    const token = apiClient.getToken();
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
     const handleCallback = async () => {
       try {
-        // Debug: Log all URL parameters
-        console.log('URL Search Params:', searchParams.toString());
-        console.log('All URL parameters:', Object.fromEntries(searchParams.entries()));
-        
         const code = searchParams.get('code');
         const error = searchParams.get('error');
-
-        console.log('Authorization code:', code);
-        console.log('Error parameter:', error);
 
         if (error) {
           setStatus('error');
@@ -38,31 +37,19 @@ const YouTubeCallback: React.FC = () => {
           return;
         }
 
-        console.log('Sending code to backend:', code);
-
-        // Check if user is authenticated
-        const token = apiClient.getToken();
-        console.log('Authentication token:', token ? 'Present' : 'Missing');
-
         // Send the code to our backend
         const response = await apiClient.handleYouTubeCallback(code);
-        
-        console.log('Backend response:', response);
         
         if (response.success) {
           setStatus('success');
           setMessage(`Successfully connected ${response.channels?.length || 0} YouTube channel(s)!`);
-          
-          // Redirect to analytics after a short delay
-          setTimeout(() => {
-            navigate('/analytics', { replace: true });
-          }, 2000);
+          // Redirect to analytics immediately
+          navigate('/analytics', { replace: true });
         } else {
           setStatus('error');
           setMessage(response.message || 'Failed to connect YouTube account.');
         }
       } catch (error: any) {
-        console.error('YouTube callback error:', error);
         setStatus('error');
         setMessage(error.message || 'An unexpected error occurred.');
       }

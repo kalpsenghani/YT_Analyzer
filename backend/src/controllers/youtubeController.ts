@@ -29,20 +29,12 @@ export async function getAuthUrl(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Debug logging
-    console.log('YouTube OAuth Configuration:');
-    console.log('Client ID:', YOUTUBE_CLIENT_ID);
-    console.log('Redirect URI:', YOUTUBE_REDIRECT_URI);
-    console.log('Environment YOUTUBE_REDIRECT_URI:', process.env.YOUTUBE_REDIRECT_URI);
-
     // Initialize service if not already done
     await initializeYouTubeService();
     
     const authUrl = youtubeService.generateAuthUrl();
-    console.log('Generated Auth URL:', authUrl);
     res.json({ authUrl });
   } catch (error: any) {
-    console.error('Error generating auth URL:', error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -130,7 +122,6 @@ export async function handleCallback(req: Request, res: Response): Promise<void>
       channels: savedChannels 
     });
   } catch (error: any) {
-    console.error('Error handling callback:', error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -158,7 +149,6 @@ export async function getConnectedChannels(req: Request, res: Response): Promise
 
     res.json(channels);
   } catch (error: any) {
-    console.error('Error fetching channels:', error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -275,7 +265,6 @@ export async function syncChannelData(req: Request, res: Response): Promise<void
       videos: savedVideos 
     });
   } catch (error: any) {
-    console.error('Error syncing channel data:', error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -313,7 +302,6 @@ export async function disconnectChannel(req: Request, res: Response): Promise<vo
       message: 'Channel disconnected successfully' 
     });
   } catch (error: any) {
-    console.error('Error disconnecting channel:', error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -409,7 +397,6 @@ export async function getChannelAnalytics(req: Request, res: Response): Promise<
       }))
     });
   } catch (error: any) {
-    console.error('Error fetching channel analytics:', error);
     res.status(500).json({ error: error.message });
   }
 } 

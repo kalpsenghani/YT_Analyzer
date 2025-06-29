@@ -32,10 +32,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import {
-  mockChannelStats,
-  mockVideos,
-  mockAnalyticsData,
-  mockAIInsights,
+  // mockChannelStats,
+  // mockVideos,
+  // mockAnalyticsData,
+  // mockAIInsights,
   formatNumber,
   formatDuration,
 } from "@/lib/mockData";
@@ -70,17 +70,71 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  // Use real data if available, fallback to mock data
-  const channelStats = summary ? {
+  // Use real data only, do not fallback to mock data
+  if (isAnalyticsLoading && !analytics.length) {
+    return (
+      <AnimatedBackground>
+        <div className="min-h-screen text-white">
+          <NavigationHeader />
+          <main className="pt-24 pb-8">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AnimatedBackground>
+    );
+  }
+
+  if (error && !analytics.length) {
+    return (
+      <AnimatedBackground>
+        <div className="min-h-screen text-white">
+          <NavigationHeader />
+          <main className="pt-24 pb-8">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center">
+                <p className="text-red-300 mb-4">{error}</p>
+                <Button onClick={() => fetchAnalytics(1, 10)}>
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AnimatedBackground>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <AnimatedBackground>
+        <div className="min-h-screen text-white">
+          <NavigationHeader />
+          <main className="pt-24 pb-8">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AnimatedBackground>
+    );
+  }
+
+  const channelStats = {
     totalVideos: summary.summary.totalVideos,
     totalViews: summary.summary.totalViews,
     totalSubscribers: 0, // Not in API summary
     avgEngagementRate: summary.summary.avgLikes / summary.summary.avgViews * 100 || 0,
     shortsViews: summary.summary.totalViews * 0.6, // Estimate from mock data ratio
     longFormViews: summary.summary.totalViews * 0.4, // Estimate from mock data ratio
-  } : mockChannelStats;
+  };
 
-  const recentData = mockAnalyticsData.slice(-7);
+  const recentData = analytics.slice(-7);
   const pieData = [
     { name: "Shorts", value: channelStats.shortsViews, color: "#ff6b6b" },
     {
@@ -90,7 +144,7 @@ const Dashboard = () => {
     },
   ];
 
-  const unreadInsights = mockAIInsights.filter((insight) => !insight.isRead);
+  const unreadInsights = analytics.filter((item) => !item.isRead);
 
   // Custom tooltip for charts
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -123,45 +177,6 @@ const Dashboard = () => {
     }
     return null;
   };
-
-  // Show loading state
-  if (isAnalyticsLoading && !analytics.length) {
-    return (
-      <AnimatedBackground>
-        <div className="min-h-screen text-white">
-          <NavigationHeader />
-          <main className="pt-24 pb-8">
-            <div className="max-w-7xl mx-auto px-6">
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-              </div>
-            </div>
-          </main>
-        </div>
-      </AnimatedBackground>
-    );
-  }
-
-  // Show error state
-  if (error && !analytics.length) {
-    return (
-      <AnimatedBackground>
-        <div className="min-h-screen text-white">
-          <NavigationHeader />
-          <main className="pt-24 pb-8">
-            <div className="max-w-7xl mx-auto px-6">
-              <div className="text-center">
-                <p className="text-red-300 mb-4">{error}</p>
-                <Button onClick={() => fetchAnalytics(1, 10)}>
-                  Retry
-                </Button>
-              </div>
-            </div>
-          </main>
-        </div>
-      </AnimatedBackground>
-    );
-  }
 
   return (
     <AnimatedBackground>
@@ -506,9 +521,9 @@ const Dashboard = () => {
                   </div>
 
                   <div className="space-y-4">
-                    {unreadInsights.slice(0, 3).map((insight, index) => (
+                    {unreadInsights.slice(0, 3).map((item, index) => (
                       <motion.div
-                        key={insight.id}
+                        key={item.id}
                         className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -520,20 +535,20 @@ const Dashboard = () => {
                           </div>
                           <div className="flex-1">
                             <h4 className="text-white font-medium text-sm mb-1">
-                              {insight.title}
+                              {item.title}
                             </h4>
                             <p className="text-white/70 text-xs leading-relaxed">
-                              {insight.content}
+                              {item.content}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                               <Badge
                                 variant="outline"
                                 className="text-xs border-purple-500/30 text-purple-300"
                               >
-                                {insight.type}
+                                {item.type}
                               </Badge>
                               <span className="text-white/50 text-xs">
-                                {Math.round(insight.confidenceScore * 100)}% confidence
+                                {Math.round(item.confidenceScore * 100)}% confidence
                               </span>
                             </div>
                           </div>
